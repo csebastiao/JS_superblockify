@@ -12,7 +12,9 @@ if __name__ == "__main__":
     folder_poly = "./data/raw/braga_private/"
     folder_results = "./data/processed/braga_private/"
     city_name = "Braga"
-    gdf = gpd.read_file(folder_poly + "SuperblockifyStudy_Limit/SuperblockifyStudy_Limit.shp")
+    gdf = gpd.read_file(
+        folder_poly + "SuperblockifyStudy_Limit/SuperblockifyStudy_Limit.shp"
+    )
     # Add a buffer to get surrounding streets
     gdf = gdf.buffer(50)
     gdf = gdf.to_crs(epsg=4326)
@@ -25,7 +27,10 @@ if __name__ == "__main__":
         keep = False
         H = G.copy()
         for n in G.nodes():
-            if len(set([m for m in G.successors(n)] + [m for m in G.predecessors(n)])) < 2:
+            if (
+                len(set([m for m in G.successors(n)] + [m for m in G.predecessors(n)]))
+                < 2
+            ):
                 H.remove_node(n)
                 keep = True
         G = H
@@ -37,7 +42,10 @@ if __name__ == "__main__":
         keep = False
         H = G.copy()
         for n in G.nodes():
-            if len(set([m for m in G.successors(n)] + [m for m in G.predecessors(n)])) < 2:
+            if (
+                len(set([m for m in G.successors(n)] + [m for m in G.predecessors(n)]))
+                < 2
+            ):
                 H.remove_node(n)
                 keep = True
         G = H

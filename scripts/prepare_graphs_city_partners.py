@@ -16,7 +16,9 @@ if __name__ == "__main__":
     folder_plot = "./plots/city_partners_public/"
     # Get all polygon files
     for file_graph in [
-        filename for filename in os.listdir(folder_graph_OSM) if filename.endswith(".gpkg")
+        filename
+        for filename in os.listdir(folder_graph_OSM)
+        if filename.endswith(".gpkg")
     ]:
         city_name = file_graph.split(".")[0]
         folder_sb = folder_graph + city_name
@@ -41,6 +43,8 @@ if __name__ == "__main__":
         G.graph["created_date"] = created_date
         G.graph["area"] = area
         G.graph["edge_population"] = True
-        G.graph["boundary"] = shapely.Polygon([[bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]])
+        G.graph["boundary"] = shapely.Polygon(
+            [[bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]]
+        )
         G.graph["boundary_crs"] = proj_crs
         ox.save_graphml(G, folder_sb + city_name + ".graphml")
