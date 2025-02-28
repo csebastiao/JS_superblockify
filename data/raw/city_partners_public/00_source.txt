@@ -1,0 +1,22 @@
+Methodology rules:
+- Always single and full (meaning without a hole) polygon.
+- When data is not coming from authoritative source, taking as a reference OpenStreetMap (OSM), finding the OSMID on Nominatim and then using OSMnx (osmnx.geocoder.geocode_to_gdf("osmid", by_osmid=True)).
+- If not authoritative, checking OSM polygon with Google Maps if shown boundaries are the same. If not, hand-drawing within the boundaries from OSM mimicking Google Maps boundaries.
+
+City list:
+Amsterdam: Main polygon from OSM (OSMID: R271110)
+Braga: Hand-drawn within boundaries from OSM (OSMID: R4115866)
+Cugir: Hand-drawn within boundaries from OSM (OSMID: R10540683)
+Haifa: From OSM (OSMID: R1387888)
+Kozani: Authoritative data (OSMID: R2249486)
+(Milan_Municipality: From OSM (OSMID: R44915). Not full city partner, see Milan_Metropolitan.)
+Milan_Metropolitan: Main polygon from OSM (OSMID: R44881)
+Riga: From OSM (OSMID: R13048688)
+Southwark: From OSM (OSMID: R8450265)
+Vilnius: From OSM (OSMID: R1529146)
+Vratsa: Hand-drawn within boundaries from OSM (OSMID: R1922257)
+Westminster: From OSM (OSMID: R51781)
+Zaragoza: Hand-drawn within boundaries from OSM (OSMID: R345740)
+
+
+Amsterdam_*****_100m.geojson files are from https://figshare.com/articles/dataset/Global_Urban_Network_Dataset/22124219/11.

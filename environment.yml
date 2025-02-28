@@ -1,6 +1,9 @@
-name: ENVNAME
+name: js_superblockify
 channels:
   - conda-forge
 dependencies:
   - pytest
   - pre-commit
+  - jupyter
+  - osmnx=2.0.1
+  - momepy=0.9.1
