@@ -8,7 +8,7 @@ This is the source code for the Superblockify Analysis for [Just Streets](https:
 **Preprint**: [arXiv:XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX)  
 **Data repository**: [zenodo.XXXXXXX](https://zenodo.org/record/XXXXXXX)  
 
-[![PROJECTNAME](SPLASHIMAGE.JPG/PNG/GIF)](PROJECTURL)
+[![PROJECTNAME](https://images.squarespace-cdn.com/content/v1/6642265dc7453f34ac58ff87/acf2eae5-aef8-4fdc-8cd9-5f061c7f4e96/JS_Logo_Green_long.png?format=200w)
 
 ## Installation
 First clone the repository:
