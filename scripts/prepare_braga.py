@@ -1,38 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Create a graph ready for superblockify partitioner algorithm from graph obtained by OSMnx.
+Create a Braga graph ready for superblockify partitioner algorithm.
 """
 
 
-import os
 import osmnx as ox
 import shapely
 import superblockify as sb
 
 
 if __name__ == "__main__":
-    folder_graph_OSM = "./data/processed/city_partners_public/graphs_OSM/"
-    folder_graph = "./data/processed/city_partners_public/graphs_SB/"
-    folder_plot = "./plots/city_partners_public/"
-    sb.config.Config.GHSL_DIR = "./data/raw"
-    # Get all polygon files
-    for file_graph in [
-        filename
-        for filename in os.listdir(folder_graph_OSM)
-        if filename.endswith(".gpkg")
-    ]:
-        city_name = file_graph.split(".")[0]
-        folder_sb = folder_graph + city_name
-        if not os.path.exists(folder_sb):
-            os.makedirs(folder_sb)
-        G = ox.load_graphml(file_graph)
+    folder_graph = "./data/processed/braga_private/"
+    sb.config.Config.GHSL_DIR = "./data/processed/ghsl"
+    for suffix in ["simplified", "wode"]:
+        G = ox.load_graphml(folder_graph + f"Braga_{suffix}.graphml")
         for n in G.nodes:
             G.nodes[n]["street_count"] = len(
                 set(list(G.neighbors(n)) + list(G.predecessors(n)))
             )
         crs = G.graph["crs"]
-        G = ox.project_graph(G)
-        proj_crs = G.graph["crs"]
+        G = ox.project_graph(G, to_crs="EPSG:3763")
+        proj_crs = "EPSG:3763"
         gdf_edges = ox.graph_to_gdfs(G, nodes=False, edges=True)
         streetgeom = gdf_edges.geometry.unary_union
         bb = streetgeom.bounds
@@ -51,4 +39,7 @@ if __name__ == "__main__":
             [[bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]]
         )
         G.graph["boundary_crs"] = proj_crs
-        ox.save_graphml(G, folder_sb + city_name + ".graphml")
+        for e in G.edges:
+            if "fid" in G.edges[e]:
+                G.edges[e].pop("fid")
+        ox.save_graphml(G, folder_graph + f"Braga_{suffix}_sbready.graphml")
