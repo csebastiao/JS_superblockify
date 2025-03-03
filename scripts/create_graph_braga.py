@@ -21,6 +21,12 @@ if __name__ == "__main__":
     poly = gdf.geometry[0]
     # Extract non-simplified so we can simplify after removing nodes
     G = ox.graph_from_polygon(poly, simplify=False)
+    # Take the rawest version
+    G_raw = ox.simplify_graph(G)
+    ox.save_graphml(G_raw, folder_results + city_name + "_raw.graphml")
+    gdfs = ox.graph_to_gdfs(G_raw)
+    geom = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=False))
+    geom.to_file(folder_results + city_name + "_raw.gpkg")
     # Remove dead-ends
     keep = True
     while keep is True:
@@ -49,7 +55,7 @@ if __name__ == "__main__":
                 H.remove_node(n)
                 keep = True
         G = H
-    ox.save_graphml(G, folder_results + city_name + ".graphml")
+    ox.save_graphml(G, folder_results + city_name + "_wode.graphml")
     # Save static figure
     ox.plot_graph(
         G,
@@ -68,4 +74,4 @@ if __name__ == "__main__":
     # Save geometry of edges and nodes as single gpkg to use GIS software for dynamic visualization and analysis
     gdfs = ox.graph_to_gdfs(G)
     geom = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=False))
-    geom.to_file(folder_results + city_name + ".gpkg")
+    geom.to_file(folder_results + city_name + "_wode.gpkg")
