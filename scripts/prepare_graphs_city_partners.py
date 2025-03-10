@@ -6,7 +6,6 @@ Create a graph ready for superblockify partitioner algorithm from graph obtained
 
 import os
 import osmnx as ox
-import shapely
 import superblockify as sb
 
 
@@ -15,40 +14,18 @@ if __name__ == "__main__":
     folder_graph = "./data/processed/city_partners_public/graphs_SB/"
     folder_plot = "./plots/city_partners_public/"
     sb.config.Config.GHSL_DIR = "./data/raw"
-    # Get all polygon files
+    # Get all files
     for file_graph in [
         filename
         for filename in os.listdir(folder_graph_OSM)
-        if filename.endswith(".gpkg")
+        if filename.endswith(".graphml")
     ]:
         city_name = file_graph.split(".")[0]
-        folder_sb = folder_graph + city_name
-        if not os.path.exists(folder_sb):
-            os.makedirs(folder_sb)
-        G = ox.load_graphml(file_graph)
-        for n in G.nodes:
-            G.nodes[n]["street_count"] = len(
-                set(list(G.neighbors(n)) + list(G.predecessors(n)))
-            )
-        crs = G.graph["crs"]
-        G = ox.project_graph(G)
-        proj_crs = G.graph["crs"]
-        gdf_edges = ox.graph_to_gdfs(G, nodes=False, edges=True)
-        streetgeom = gdf_edges.geometry.unary_union
-        bb = streetgeom.bounds
-        area = (bb[2] - bb[0]) * (bb[3] - bb[1])
-        sb.add_edge_population(G)
-        G = ox.project_graph(G, to_crs=crs)
-        G = ox.routing.add_edge_speeds(G)
-        G = ox.routing.add_edge_travel_times(G)
-        ox.add_edge_bearings(G)
-        G.graph = sb.graph_stats.basic_graph_stats(G, area=area)
-        G.graph["crs"] = crs
-        G.graph["created_date"] = "03-03-2025"
-        G.graph["area"] = area
-        G.graph["edge_population"] = True
-        G.graph["boundary"] = shapely.Polygon(
-            [[bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]], [bb[0], bb[1]]]
-        )
-        G.graph["boundary_crs"] = proj_crs
-        ox.save_graphml(G, folder_sb + city_name + ".graphml")
+        if city_name != "Milan_Metropolitan":
+            folder_sb = folder_graph + city_name
+            if not os.path.exists(folder_sb):
+                print(city_name)
+                os.makedirs(folder_sb)
+                G = ox.load_graphml(folder_graph_OSM + file_graph)
+                ## TODO based on Braga example
+                ox.save_graphml(G, folder_sb + "/" + city_name + ".graphml")

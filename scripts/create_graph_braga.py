@@ -20,9 +20,9 @@ if __name__ == "__main__":
     gdf = gdf.to_crs(epsg=4326)
     poly = gdf.geometry[0]
     # Extract non-simplified so we can simplify after removing nodes
-    G = ox.graph_from_polygon(poly, simplify=False)
+    G = ox.graph_from_polygon(poly, simplify=False, network_type="all")
     # Take the rawest version
-    G_raw = ox.simplify_graph(G)
+    G_raw = ox.simplify_graph(G, edge_attrs_differ=["highway"])
     ox.save_graphml(G_raw, folder_results + city_name + "_raw.graphml")
     gdfs = ox.graph_to_gdfs(G_raw)
     geom = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=False))
@@ -41,7 +41,7 @@ if __name__ == "__main__":
                 keep = True
         G = H
     # Simplify without dead-ends
-    G = ox.simplify_graph(G)
+    G = ox.simplify_graph(G, edge_attrs_differ=["highway"])
     # Remove again dead-ends that were connected by multiple roads
     keep = True
     while keep is True:
