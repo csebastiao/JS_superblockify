@@ -36,7 +36,7 @@ def make_graph_compatible(G, poly=None, proj_crs=None):
         },
         node_attributes={"y", "x", "lat", "lon", "osmid", "street_count"},
     )
-    add_edge_cells(G, show_plot=True)
+    add_edge_cells(G)
     sb.add_edge_population(G)
     if poly is None:
         gdf_edges = ox.graph_to_gdfs(G, nodes=False, edges=True)

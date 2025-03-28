@@ -12,8 +12,8 @@ if __name__ == "__main__":
     sb.config.Config.GRAPH_DIR = "./data/processed/braga_private"
     sb.config.Config.RESULTS_DIR = "./data/processed/braga_private/sb_results"
     graph_name = "Braga_raw"
-    part_name = "shierarchy"
-    part = sb.StreetHierarchyPartitioner(
+    part_name = "residential"
+    part = sb.ResidentialPartitioner(
         name=graph_name + "_" + part_name,
         city_name=graph_name + "_sbready",
         search_str="Braga, PT",

@@ -22,7 +22,15 @@ if __name__ == "__main__":
         city_name = file_poly.split(".")[0]
         poly = gpd.read_file(folder_poly + file_poly).geometry[0]
         # Extract graph from OSM using OSMnx.
-        G = ox.graph_from_polygon(poly)
+        G = ox.graph_from_polygon(poly, network_type="drive")
+        toremove = []
+        for e in G.edges:
+            if "access" in G.edges[e]:
+                if G.edges[e]["access"] == "no":
+                    toremove.append(e)
+            if "area" in G.edges[e]:
+                G.edges[e].pop("area")
+        G.remove_edges_from(toremove)
         ox.save_graphml(G, folder_graph + city_name + ".graphml")
         # Save static figure
         ox.plot_graph(
