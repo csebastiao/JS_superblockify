@@ -8,6 +8,8 @@ import os
 import pandas as pd
 import geopandas as gpd
 import osmnx as ox
+import tqdm
+import networkx as nx
 
 
 if __name__ == "__main__":
@@ -16,14 +18,21 @@ if __name__ == "__main__":
     folder_geom = "./data/processed/city_partners_public/geoms/"
     folder_plot = "./plots/city_partners_public/graphs/"
     # Get all polygon files
-    for file_poly in [
-        filename for filename in os.listdir(folder_poly) if filename.endswith(".gpkg")
-    ]:
+    for file_poly in tqdm.tqdm(
+        sorted(
+            [
+                filename
+                for filename in os.listdir(folder_poly)
+                if filename.endswith(".gpkg")
+            ]
+        )
+    ):
         city_name = file_poly.split(".")[0]
         poly = gpd.read_file(folder_poly + file_poly).geometry[0]
         # Extract graph from OSM using OSMnx.
-        G = ox.graph_from_polygon(poly, network_type="drive")
+        G = ox.graph_from_polygon(poly, network_type="drive", simplify=False)
         toremove = []
+        # Remove forbidden places to drive
         for e in G.edges:
             if "access" in G.edges[e]:
                 if G.edges[e]["access"] == "no":
@@ -31,6 +40,9 @@ if __name__ == "__main__":
             if "area" in G.edges[e]:
                 G.edges[e].pop("area")
         G.remove_edges_from(toremove)
+        # Keep only the LCC and simplify
+        G = G.subgraph(max(nx.weakly_connected_components(G), key=len))
+        G = ox.simplify_graph(G)
         ox.save_graphml(G, folder_graph + city_name + ".graphml")
         # Save static figure
         ox.plot_graph(

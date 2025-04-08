@@ -13,6 +13,7 @@ import superblockify as sb
 from superblockify.utils import load_graphml_dtypes, extract_attributes
 from superblockify.graph_stats import basic_graph_stats
 from superblockify.population import add_edge_cells
+import tqdm
 
 
 def make_graph_compatible(G, poly=None, proj_crs=None):
@@ -62,11 +63,15 @@ if __name__ == "__main__":
     folder_plot = "./plots/city_partners_public/"
     sb.config.Config.GHSL_DIR = "./data/raw"
     # Get all files
-    for file_graph in [
-        filename
-        for filename in os.listdir(folder_graph_OSM)
-        if filename.endswith(".graphml")
-    ]:
+    for file_graph in tqdm.tqdm(
+        sorted(
+            [
+                filename
+                for filename in os.listdir(folder_graph_OSM)
+                if filename.endswith(".graphml")
+            ]
+        )
+    ):
         city_name = file_graph.split(".")[0]
         folder_sb = folder_graph + city_name
         if not os.path.exists(folder_sb):

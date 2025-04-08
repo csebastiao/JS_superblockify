@@ -6,6 +6,7 @@ Run Superblockify on {city_name} private limits.
 import os
 import superblockify as sb
 import shapely
+import tqdm
 
 
 if __name__ == "__main__":
@@ -14,11 +15,15 @@ if __name__ == "__main__":
     folder_plot = "./plots/city_partners_public/"
     sb.config.Config.GHSL_DIR = "./data/raw"
     # Get all files
-    for file_graph in [
-        filename
-        for filename in os.listdir(folder_graph_OSM)
-        if filename.endswith(".graphml")
-    ]:
+    for file_graph in tqdm.tqdm(
+        sorted(
+            [
+                filename
+                for filename in os.listdir(folder_graph_OSM)
+                if filename.endswith(".graphml")
+            ]
+        )
+    ):
         city_name = file_graph.split(".")[0]
         sb.config.Config.GRAPH_DIR = (
             "./data/processed/city_partners_public/graphs_SB/" + city_name
