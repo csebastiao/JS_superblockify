@@ -66,20 +66,21 @@ if __name__ == "__main__":
                             G_filt.edges[e][attr] = p["subgraph"].edges[e][attr]
                         G_filt.edges[e]["ltn_name"] = p["name"]
                         G_filt.edges[e]["in_ltn"] = True
-                else:
-                    for e in p["subgraph"].edges:
-                        if G_all.has_edge(*e):
-                            for attr in p["subgraph"].edges[e]:
-                                G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
-                            G_all.edges[e]["ltn_name"] = p["name"]
-                            G_all.edges[e]["in_ltn"] = True
-            for e in part.sparsified.edges:
-                for H in [G_all, G_filt]:
+                for e in p["subgraph"].edges:
+                    if G_all.has_edge(*e):
+                        for attr in p["subgraph"].edges[e]:
+                            G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
+                        G_all.edges[e]["ltn_name"] = p["name"]
+                        G_all.edges[e]["in_ltn"] = True
+            for H in [G_all, G_filt]:
+                for e in part.sparsified.edges:
                     if H.has_edge(*e):
                         for attr in part.sparsified.edges[e]:
                             H.edges[e][attr] = part.sparsified.edges[e][attr]
                         H.edges[e]["ltn_name"] = None
                         H.edges[e]["in_ltn"] = False
+            # TODO understand how to get the average travel distance increase on the entire graph
+            # TODO Solve issue of edges not in partitions and not in sparsified
             filt_part = pd.DataFrame(filt_part)
             filt_part = filt_part.drop("subgraph", axis=1)
             all_part = all_part.drop("subgraph", axis=1)
