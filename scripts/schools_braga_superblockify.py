@@ -160,11 +160,11 @@ if __name__ == "__main__":
             if any(gdf_buffered.intersects(G.edges[e]["geometry"])):
                 G.edges[e][f"in_buffer_{buff_size}"] = True
                 G.edges[e][f"sparse_{buff_size}"] = 0
-                if G.edges[e]["highway"] not in ["residential", "living_streets"]:
+                if G.edges[e]["highway"] not in ["residential", "living_street"]:
                     edges_removed.append(G.edges[e]["length"])
             else:
                 G.edges[e][f"in_buffer_{buff_size}"] = False
-                if G.edges[e]["highway"] in ["residential", "living_streets"]:
+                if G.edges[e]["highway"] in ["residential", "living_street"]:
                     G.edges[e][f"sparse_{buff_size}"] = 0
                 else:
                     G.edges[e][f"sparse_{buff_size}"] = 1
