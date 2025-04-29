@@ -6,17 +6,20 @@ Filter all LTNs for visualization purposes.
 
 import os
 import geopandas as gpd
+import tqdm
 
 
 if __name__ == "__main__":
     folder_graph_names = "./data/processed/city_partners_public/graphs_OSM/"
     folder_graph = "./data/processed/city_partners_public/graphs_SB/"
-    for file_graph in sorted(
-        [
-            filename
-            for filename in os.listdir(folder_graph_names)
-            if filename.endswith(".graphml")
-        ]
+    for file_graph in tqdm.tqdm(
+        sorted(
+            [
+                filename
+                for filename in os.listdir(folder_graph_names)
+                if filename.endswith(".graphml")
+            ]
+        )
     ):
         city_name = file_graph.split(".")[0]
         for part_name in ["residential", "betweenness"]:

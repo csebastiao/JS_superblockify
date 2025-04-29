@@ -3,11 +3,12 @@
 Analyze the obtained results from superblockifying cities.
 """
 
-
 import pandas as pd
 import os
 from superblockify.utils import load_graphml_dtypes
 import json
+import tqdm
+import shapely
 
 
 if __name__ == "__main__":
@@ -20,23 +21,25 @@ if __name__ == "__main__":
             "Amount of superblocks",
             "Share of streets within superblocks",
             "Share of the population within superblocks",
+            "Area of pacified streets",
         ]
         if part_name == "betweenness":
             col_names.append("Share of non-residential streets in superblocks")
         for filt_val in ["filt", "all"]:
             all_arr = []
-            for file_graph in sorted(
-                [
-                    filename
-                    for filename in os.listdir(folder_graph_names)
-                    if filename.endswith(".graphml")
-                ]
+            for file_graph in tqdm.tqdm(
+                sorted(
+                    [
+                        filename
+                        for filename in os.listdir(folder_graph_names)
+                        if filename.endswith(".graphml")
+                    ]
+                )
             ):
                 city_name = file_graph.split(".")[0]
                 folder_sb = (
                     folder_graph + f"{city_name}/sb_results/{city_name}_{part_name}/"
                 )
-                print(city_name, folder_sb + f"{city_name}_{filt_val}.graphml")
                 G = load_graphml_dtypes(folder_sb + f"{city_name}_{filt_val}.graphml")
                 # TODO Solve issue of edges not in partitions and not in sparsified
                 for e in G.edges:
@@ -55,6 +58,14 @@ if __name__ == "__main__":
                     / sum([G.edges[e]["population"] for e in G.edges]),
                     1,
                 )
+                areasum = round(
+                    100
+                    * sum(
+                        [shapely.from_wkt(G.edges[e]["cell"]).area for e in ltn_streets]
+                    )
+                    / sum([shapely.from_wkt(G.edges[e]["cell"]).area for e in G.edges]),
+                    1,
+                )
                 with open(folder_sb + f"{filt_val}_partitions.json") as f:
                     partitions = json.load(f)
                 col_to_add = [
@@ -62,16 +73,23 @@ if __name__ == "__main__":
                     len(partitions["name"]),
                     roadsum,
                     popsum,
+                    areasum,
                 ]
                 if part_name == "betweenness":
-                    res_streets = [
-                        e for e in G.edges if G.edges[e]["highway"] == "residential"
+                    non_res_streets = [
+                        e for e in G.edges if G.edges[e]["highway"] != "residential"
                     ]
                     col_to_add.append(
                         round(
                             100
-                            * len([e for e in res_streets if e in ltn_streets])
-                            / len(res_streets),
+                            * sum(
+                                [
+                                    G.edges[e]["length"]
+                                    for e in non_res_streets
+                                    if e in ltn_streets
+                                ]
+                            )
+                            / sum([G.edges[e]["length"] for e in non_res_streets]),
                             1,
                         )
                     )
