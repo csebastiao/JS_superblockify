@@ -22,6 +22,8 @@ if __name__ == "__main__":
             "Share of streets within superblocks",
             "Share of the population within superblocks",
             "Area of pacified streets",
+            "Average travel distance increase",
+            "Maximal detour",
         ]
         if part_name == "betweenness":
             col_names.append("Share of non-residential streets in superblocks")
@@ -74,6 +76,8 @@ if __name__ == "__main__":
                     roadsum,
                     popsum,
                     areasum,
+                    round(100 * (float(G.graph["avg_rel_travel"]) - 1), 5),
+                    round(float(G.graph["max_detour"]) / 1000, 1),
                 ]
                 if part_name == "betweenness":
                     non_res_streets = [

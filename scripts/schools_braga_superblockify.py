@@ -9,10 +9,25 @@ import networkx as nx
 import geopandas as gpd
 import osmnx as ox
 import superblockify as sb
+import numpy as np
 from superblockify.utils import load_graphml_dtypes, extract_attributes
 from superblockify.graph_stats import basic_graph_stats
 from superblockify.population import add_edge_cells
 from superblockify.partitioning import ResidentialPartitioner, EdgeAttributePartitioner
+
+
+def avoid_zerodiv_matrix(num_mat, den_mat):
+    """
+    Divide one matrix by another while replacing numerator divided by 0 by 0.
+    Example: [[1, 2],   divided by [[1, 0],    will give out [[1, 0],
+              [3, 4]]               [6, 0]]                   [0.5, 0]]
+    """
+    return np.divide(
+        num_mat,
+        den_mat,
+        out=np.zeros_like(num_mat),
+        where=((den_mat != 0) & (den_mat != np.inf) & (num_mat != np.inf)),
+    )
 
 
 def make_graph_compatible(G, poly=None, proj_crs=None):
@@ -204,6 +219,7 @@ if __name__ == "__main__":
         replace_max_speeds=False,
     )
     part.save()
+    G = part.graph.copy()
     G_all = G.copy()
     G_filt = G.copy()
     filt_part = []
@@ -216,20 +232,53 @@ if __name__ == "__main__":
                     G_filt.edges[e][attr] = p["subgraph"].edges[e][attr]
                 G_filt.edges[e]["ltn_name"] = p["name"]
                 G_filt.edges[e]["in_ltn"] = True
-        for e in p["subgraph"].edges:
-            if G_all.has_edge(*e):
+        else:
+            for e in p["subgraph"].edges:
                 for attr in p["subgraph"].edges[e]:
-                    G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
-                G_all.edges[e]["ltn_name"] = p["name"]
-                G_all.edges[e]["in_ltn"] = True
+                    G_filt.edges[e][attr] = p["subgraph"].edges[e][attr]
+                G_filt.edges[e]["ltn_name"] = None
+                G_filt.edges[e]["in_ltn"] = False
+        for e in p["subgraph"].edges:
+            for attr in p["subgraph"].edges[e]:
+                G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
+            G_all.edges[e]["ltn_name"] = p["name"]
+            G_all.edges[e]["in_ltn"] = True
     for H in [G_all, G_filt]:
         for e in part.sparsified.edges:
-            if H.has_edge(*e):
-                for attr in part.sparsified.edges[e]:
-                    H.edges[e][attr] = part.sparsified.edges[e][attr]
-                H.edges[e]["ltn_name"] = None
-                H.edges[e]["in_ltn"] = False
+            for attr in part.sparsified.edges[e]:
+                H.edges[e][attr] = part.sparsified.edges[e][attr]
+            H.edges[e]["ltn_name"] = None
+            H.edges[e]["in_ltn"] = False
     filt_part = pd.DataFrame(filt_part)
+    partitions_travel_filt = part.get_partition_nodes()
+    partitions_travel_filt = {
+        partition["name"]: {
+            "subgraph": partition["subgraph"],
+            "nodes": list(partition["nodes"]),  # exclusive nodes inside the subgraph
+            "nodelist": list(partition["subgraph"]),  # also nodes shared with the
+            # sparsified graph or on partition boundaries
+        }
+        for partition in partitions_travel_filt
+        if partition["name"] in list(filt_part["name"])
+    }
+    filt_sparsified = G.edge_subgraph(
+        [e for e in G_filt.edges if G_filt.edges[e]["in_ltn"] is False]
+    )
+    partitions_travel_filt["sparsified"] = {
+        "subgraph": filt_sparsified,
+        "nodes": list(filt_sparsified.nodes),
+        "nodelist": list(filt_sparsified.nodes),
+    }
+    dg, _ = sb.metrics.distances.calculate_path_distance_matrix(G, weight="length")
+    dgr, _ = sb.metrics.distances.shortest_paths_restricted(
+        G, partitions_travel_filt, "length", list(G.nodes)
+    )
+    rel_travel = avoid_zerodiv_matrix(dgr, dg)
+    G_filt.graph["avg_rel_travel"] = np.sum(rel_travel) / np.count_nonzero(rel_travel)
+    max_detour = np.where(rel_travel == np.max(rel_travel))
+    G_filt.graph["max_detour"] = (
+        dgr[max_detour[0][0]][max_detour[1][0]] - dg[max_detour[0][0]][max_detour[1][0]]
+    )
     filt_part = filt_part.drop("subgraph", axis=1)
     all_part = all_part.drop("subgraph", axis=1)
     all_part.to_json(
@@ -286,6 +335,7 @@ if __name__ == "__main__":
             replace_max_speeds=False,
         )
         part.save()
+        G = part.graph.copy()
         G_all = G.copy()
         G_filt = G.copy()
         filt_part = []
@@ -298,20 +348,58 @@ if __name__ == "__main__":
                         G_filt.edges[e][attr] = p["subgraph"].edges[e][attr]
                     G_filt.edges[e]["ltn_name"] = p["name"]
                     G_filt.edges[e]["in_ltn"] = True
-            for e in p["subgraph"].edges:
-                if G_all.has_edge(*e):
+            else:
+                for e in p["subgraph"].edges:
                     for attr in p["subgraph"].edges[e]:
-                        G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
-                    G_all.edges[e]["ltn_name"] = p["name"]
-                    G_all.edges[e]["in_ltn"] = True
+                        G_filt.edges[e][attr] = p["subgraph"].edges[e][attr]
+                    G_filt.edges[e]["ltn_name"] = None
+                    G_filt.edges[e]["in_ltn"] = False
+            for e in p["subgraph"].edges:
+                for attr in p["subgraph"].edges[e]:
+                    G_all.edges[e][attr] = p["subgraph"].edges[e][attr]
+                G_all.edges[e]["ltn_name"] = p["name"]
+                G_all.edges[e]["in_ltn"] = True
         for H in [G_all, G_filt]:
             for e in part.sparsified.edges:
-                if H.has_edge(*e):
-                    for attr in part.sparsified.edges[e]:
-                        H.edges[e][attr] = part.sparsified.edges[e][attr]
-                    H.edges[e]["ltn_name"] = None
-                    H.edges[e]["in_ltn"] = False
+                for attr in part.sparsified.edges[e]:
+                    H.edges[e][attr] = part.sparsified.edges[e][attr]
+                H.edges[e]["ltn_name"] = None
+                H.edges[e]["in_ltn"] = False
         filt_part = pd.DataFrame(filt_part)
+        partitions_travel_filt = part.get_partition_nodes()
+        partitions_travel_filt = {
+            partition["name"]: {
+                "subgraph": partition["subgraph"],
+                "nodes": list(
+                    partition["nodes"]
+                ),  # exclusive nodes inside the subgraph
+                "nodelist": list(partition["subgraph"]),  # also nodes shared with the
+                # sparsified graph or on partition boundaries
+            }
+            for partition in partitions_travel_filt
+            if partition["name"] in list(filt_part["name"])
+        }
+        filt_sparsified = G.edge_subgraph(
+            [e for e in G_filt.edges if G_filt.edges[e]["in_ltn"] is False]
+        )
+        partitions_travel_filt["sparsified"] = {
+            "subgraph": filt_sparsified,
+            "nodes": list(filt_sparsified.nodes),
+            "nodelist": list(filt_sparsified.nodes),
+        }
+        dg, _ = sb.metrics.distances.calculate_path_distance_matrix(G, weight="length")
+        dgr, _ = sb.metrics.distances.shortest_paths_restricted(
+            G, partitions_travel_filt, "length", list(G.nodes)
+        )
+        rel_travel = avoid_zerodiv_matrix(dgr, dg)
+        G_filt.graph["avg_rel_travel"] = np.sum(rel_travel) / np.count_nonzero(
+            rel_travel
+        )
+        max_detour = np.where(rel_travel == np.max(rel_travel))
+        G_filt.graph["max_detour"] = (
+            dgr[max_detour[0][0]][max_detour[1][0]]
+            - dg[max_detour[0][0]][max_detour[1][0]]
+        )
         filt_part = filt_part.drop("subgraph", axis=1)
         all_part = all_part.drop("subgraph", axis=1)
         all_part.to_json(
@@ -359,6 +447,8 @@ if __name__ == "__main__":
         "Area of pacified streets",
         "Schools within a superblock",
         "Superblocks without a school",
+        "Average travel distance increase",
+        "Maximal detour",
     ]
     all_arr = []
     for part_name in ["residential", "buffer_50", "buffer_100", "buffer_200"]:
@@ -418,6 +508,8 @@ if __name__ == "__main__":
                     / len(part["classification"]),
                     1,
                 ),
+                round(100 * (float(G.graph["avg_rel_travel"]) - 1), 5),
+                round(float(G.graph["max_detour"]) / 1000, 1),
             ]
         )
     df = pd.DataFrame(all_arr, columns=col_names)
